@@ -1,0 +1,107 @@
+services:
+  fakeserver:
+    profiles:
+      - debug
+    image: nginx
+    restart: unless-stopped
+    volumes:
+      - ./fakeserver/metrics:/usr/share/nginx/html/metrics
+      - ./fakeserver/data:/usr/share/nginx/html/data
+      - ./fakeserver/default.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - "8082:8080"
+
+  frmcompanion:
+    image: ghcr.io/prestonr83/ficsit-remote-monitoring-companion:latest
+    restart: unless-stopped
+    environment:
+      - FRM_HOST=${FRM_HOST:-satisfactory-server}
+      - FRM_PORT=${FRM_PORT:-8080}
+      - FRM_HOSTS=${FRM_HOSTS:-}
+    ports:
+      - "9000:9000"
+
+  prometheus:
+    image: prom/prometheus
+    restart: unless-stopped
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - prometheus:/prometheus
+    ports:
+      - "9090:9090"
+
+  frmcache:
+    image: ghcr.io/prestonr83/ficsit-remote-monitoring-cache:latest
+    restart: unless-stopped
+    environment:
+      - FRM_HOST=${FRM_HOST:-satisfactory-server}
+      - FRM_PORT=${FRM_PORT:-8080}
+      - FRM_HOSTS=${FRM_HOSTS:-}
+      - PG_HOST=${PG_HOST:-postgres}
+      - PG_PORT=${PG_PORT:-5432}
+      - PG_PASSWORD=${PG_PASSWORD:-secretpassword}
+      - PG_USER=${PG_USER:-postgres}
+      - PG_DB=${PG_DB:-postgres}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      - POSTGRES_PASSWORD=${PG_PASSWORD:-secretpassword}
+    volumes:
+      - postgresql:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  alertmanager-config:
+    image: ghcr.io/prestonr83/ficsit-remote-monitoring-alertmanager-config:latest
+    volumes:
+      - ./alertmanager:/etc/alertmanager
+    environment:
+      - FRM_HOST=${FRM_HOST:-satisfactory-server}
+      - FRM_PORT=${FRM_PORT:-8080}
+      - FRM_HOSTS=${FRM_HOSTS:-}
+      - DISCORD_WEBHOOK=${DISCORD_WEBHOOK:-}
+      - DISCORD_WEBHOOKS=${DISCORD_WEBHOOKS:-}
+
+  alertmanager:
+    image: prom/alertmanager
+    restart: unless-stopped
+    volumes:
+      - ./alertmanager:/etc/alertmanager
+    ports:
+      - "9093:9093"
+    depends_on:
+      alertmanager-config:
+        condition: service_completed_successfully
+        restart: true
+
+  grafana:
+    image: grafana/grafana-oss
+    restart: unless-stopped
+    volumes:
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
+      - ./grafana/dashboards:/etc/grafana/dashboards
+      - ./grafana/grafana.ini:/etc/grafana/grafana.ini
+      - ./grafana/home-dashboard.json:/usr/share/grafana/public/dashboards/home.json
+      - ./grafana/icons:/usr/share/grafana/public/img/icons/satisfactory
+      - grafana:/var/lib/grafana
+    ports:
+      - "3000:3000"
+
+volumes:
+  grafana:
+  postgresql:
+  prometheus:
+
+networks:
+  default:
+    external: true
+    name: satisfactory-frm
