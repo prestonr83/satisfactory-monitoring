@@ -3,30 +3,31 @@ groups:
     rules:
 # record power consumped with 20% margin of overhead
     - record: power_consumed_overhead:min6h
-      expr: min(1.2 * max_over_time(power_consumed[6h])) by (circuit_id,url,session_name)
+      expr: min(${POWER_CONSUMED_OVERHEAD_MULTIPLIER} * max_over_time(power_consumed[${POWER_CONSUMED_OVERHEAD_WINDOW}])) by (circuit_id,url,session_name)
     - record: power_consumed_overhead_or_max_consumed:min6h
-      expr: min(power_consumed_overhead:min6h or last_over_time(power_max_consumed[1h])) by (circuit_id,url,session_name)
+      expr: min(power_consumed_overhead:min6h or last_over_time(power_max_consumed[${POWER_MAX_CONSUMED_WINDOW}])) by (circuit_id,url,session_name)
     - record: battery_minutes_empty
       expr: round(battery_seconds_empty/60)
 
     - alert: FuseTriggered
-      expr: fuse_triggered > 0
+      expr: fuse_triggered > ${FUSE_TRIGGERED_THRESHOLD}
+      for: ${FUSE_TRIGGERED_FOR}
       labels:
         category: power
       annotations:
         summary: "Fuse triggered"
         description: Fuse triggered - power grid {{ $labels.circuit_id }} is without power.
     - alert: BatteryDrained
-      expr: 0 < battery_minutes_empty and battery_minutes_empty < 1800
-      for: 10s
+      expr: 0 < battery_minutes_empty and battery_minutes_empty < ${BATTERY_DRAINED_MINUTES}
+      for: ${BATTERY_DRAINED_FOR}
       labels:
         category: power
       annotations:
         summary: "Battery drained"
         description: A battery has nearly drained on circuit {{ $labels.circuit_id }}. Under {{ $value }} minutes of power remaining.
     - alert: BatteryDraining
-      expr: battery_differential < 0
-      for: 10s
+      expr: battery_differential < ${BATTERY_DRAINING_THRESHOLD}
+      for: ${BATTERY_DRAINING_FOR}
       labels:
         category: power
       annotations:
@@ -35,8 +36,8 @@ groups:
 
 # Alert when consumption is *likely* to overtake power capacity - when both max consumption and observed consumption -- with a 20% capacity margin is over power capacity
     - alert: MaxConsumption
-      expr: power_capacity < power_consumed_overhead_or_max_consumed:min6h
-      for: 10s
+      expr: ${MAX_CONSUMPTION_CAPACITY_MULTIPLIER} * power_capacity < power_consumed_overhead_or_max_consumed:min6h
+      for: ${MAX_CONSUMPTION_FOR}
       labels:
         category: power
       annotations:

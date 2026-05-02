@@ -2,18 +2,18 @@ groups:
   - name: Production
     rules:
     - alert: Overconsuming
-      expr:  items_produced_per_min - items_consumed_per_min < 0
-      for: 1m
+      expr:  items_produced_per_min - items_consumed_per_min < ${OVERCONSUMING_DIFFERENCE_THRESHOLD}
+      for: ${OVERCONSUMING_FOR}
       labels:
         category: production
       annotations:
         summary: "Overconsuming item"
         description: "{{ $labels.item_name }} consumption has overtaken production. Produce more {{ $labels.item_name }} so as to not run out"
     - alert: Underproducing
-      expr: item_production_capacity_pc < 0.2
-      for: 1m
+      expr: item_production_capacity_pc < ${UNDERPRODUCING_CAPACITY_PC}
+      for: ${UNDERPRODUCING_FOR}
       labels:
         category: production
       annotations:
         summary: "Underproducing item"
-        description: "{{ $labels.item_name }} production is low - under 20% production capacity. Check production sites?"
+        description: "{{ $labels.item_name }} production is low - under ${UNDERPRODUCING_CAPACITY_PERCENT}% production capacity. Check production sites?"

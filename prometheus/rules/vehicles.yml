@@ -2,7 +2,8 @@ groups:
   - name: Vehicles
     rules:
     - alert: TrainDerailed
-      expr: train_derailed > 0
+      expr: train_derailed > ${TRAIN_DERAILED_THRESHOLD}
+      for: ${TRAIN_DERAILED_FOR}
       labels:
         category: vehicles
       annotations:
