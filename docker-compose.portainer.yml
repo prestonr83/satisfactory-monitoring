@@ -73,12 +73,12 @@ services:
   grafana:
     image: grafana/grafana-oss
     restart: unless-stopped
+    environment:
+      - GF_PLUGINS_ENABLE_ALPHA=true
     volumes:
       - ./grafana/datasources:/etc/grafana/provisioning/datasources
-      - ./grafana/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
       - ./grafana/dashboards:/etc/grafana/dashboards
-      - ./grafana/grafana.ini:/etc/grafana/grafana.ini
-      - ./grafana/home-dashboard.json:/usr/share/grafana/public/dashboards/home.json
       - ./grafana/icons:/usr/share/grafana/public/img/icons/satisfactory
       - grafana:/var/lib/grafana
     ports:
