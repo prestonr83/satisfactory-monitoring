@@ -2,8 +2,14 @@ FROM grafana/grafana-oss
 
 ENV GF_PLUGINS_ENABLE_ALPHA=true
 
-COPY datasources/ /etc/grafana/provisioning/datasources/
-COPY provisioning/dashboards/ /etc/grafana/provisioning/dashboards/
-COPY dashboards/ /etc/grafana/dashboards/
-COPY icons/ /usr/share/grafana/public/img/icons/satisfactory/
-COPY home-dashboard.json /usr/share/grafana/public/dashboards/home.json
+COPY datasources/ /opt/satisfactory-monitoring/defaults/grafana/provisioning/datasources/
+COPY provisioning/dashboards/ /opt/satisfactory-monitoring/defaults/grafana/provisioning/dashboards/
+COPY dashboards/ /opt/satisfactory-monitoring/defaults/grafana/dashboards/
+COPY icons/ /opt/satisfactory-monitoring/defaults/grafana/icons/
+COPY home-dashboard.json /opt/satisfactory-monitoring/defaults/grafana/home-dashboard.json
+COPY docker-entrypoint.sh /usr/local/bin/satisfactory-grafana-entrypoint.sh
+
+USER root
+RUN chmod +x /usr/local/bin/satisfactory-grafana-entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/satisfactory-grafana-entrypoint.sh"]

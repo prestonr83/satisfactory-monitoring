@@ -26,11 +26,23 @@ export BATTERY_DRAINING_THRESHOLD BATTERY_DRAINING_FOR MAX_CONSUMPTION_CAPACITY_
 export OVERCONSUMING_DIFFERENCE_THRESHOLD OVERCONSUMING_FOR UNDERPRODUCING_CAPACITY_PC UNDERPRODUCING_CAPACITY_PERCENT UNDERPRODUCING_FOR
 export TRAIN_DERAILED_THRESHOLD TRAIN_DERAILED_FOR
 
-rm -rf /tmp/prometheus-config
-mkdir -p /tmp/prometheus-config
-cp -R /etc/prometheus-src/. /tmp/prometheus-config/
+mkdir -p /etc/prometheus
 
-for file in /tmp/prometheus-config/rules/*.yml; do
+if [ ! -f /etc/prometheus/prometheus.yml ]; then
+  cp /opt/satisfactory-monitoring/defaults/prometheus/prometheus.yml /etc/prometheus/prometheus.yml
+fi
+
+if [ ! -d /etc/prometheus/nodes ] || [ -z "$(find /etc/prometheus/nodes -type f 2>/dev/null)" ]; then
+  mkdir -p /etc/prometheus/nodes
+  cp -R /opt/satisfactory-monitoring/defaults/prometheus/nodes/. /etc/prometheus/nodes/
+fi
+
+if [ ! -d /etc/prometheus/rules ] || [ -z "$(find /etc/prometheus/rules -type f 2>/dev/null)" ]; then
+  mkdir -p /etc/prometheus/rules
+  cp -R /opt/satisfactory-monitoring/defaults/prometheus/rules/. /etc/prometheus/rules/
+fi
+
+find /etc/prometheus/rules -type f -name '*.yml' | while IFS= read -r file; do
   sed -i \
     -e "s|\${POWER_CONSUMED_OVERHEAD_MULTIPLIER}|${POWER_CONSUMED_OVERHEAD_MULTIPLIER}|g" \
     -e "s|\${POWER_CONSUMED_OVERHEAD_WINDOW}|${POWER_CONSUMED_OVERHEAD_WINDOW}|g" \
@@ -53,4 +65,4 @@ for file in /tmp/prometheus-config/rules/*.yml; do
     "$file"
 done
 
-exec /bin/prometheus --config.file=/tmp/prometheus-config/prometheus.yml "$@"
+exec /bin/prometheus --config.file=/etc/prometheus/prometheus.yml "$@"

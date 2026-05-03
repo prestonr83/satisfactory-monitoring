@@ -26,6 +26,11 @@ func main() {
 		return
 	}
 
+	if _, err := os.Stat(output); err == nil {
+		fmt.Println("alertmanager config already exists, leaving it unchanged:", output)
+		return
+	}
+
 	hostnames := []string{}
 	if frmHostnames == "" {
 		hostnames = append(hostnames, "http://"+frmHostname+":"+frmPort)

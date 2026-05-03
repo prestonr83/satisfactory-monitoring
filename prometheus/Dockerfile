@@ -1,8 +1,8 @@
 FROM prom/prometheus
 
-COPY prometheus.yml /etc/prometheus-src/prometheus.yml
-COPY nodes/ /etc/prometheus-src/nodes/
-COPY rules/ /etc/prometheus-src/rules/
+COPY prometheus.yml /opt/satisfactory-monitoring/defaults/prometheus/prometheus.yml
+COPY nodes/ /opt/satisfactory-monitoring/defaults/prometheus/nodes/
+COPY rules/ /opt/satisfactory-monitoring/defaults/prometheus/rules/
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 USER root

@@ -32,6 +32,7 @@ services:
       - TRAIN_DERAILED_THRESHOLD=${TRAIN_DERAILED_THRESHOLD:-0}
       - TRAIN_DERAILED_FOR=${TRAIN_DERAILED_FOR:-0s}
     volumes:
+      - prometheus-config:/etc/prometheus
       - prometheus:/prometheus
     ports:
       - "9090:9090"
@@ -68,24 +69,21 @@ services:
   alertmanager-config:
     image: ghcr.io/prestonr83/ficsit-remote-monitoring-alertmanager-config:latest
     volumes:
-      - alertmanager-config:/generated
+      - alertmanager-config:/etc/alertmanager
     environment:
       - FRM_HOST=${FRM_HOST:-satisfactory-server}
       - FRM_PORT=${FRM_PORT:-8080}
       - FRM_HOSTS=${FRM_HOSTS:-}
       - DISCORD_WEBHOOK=${DISCORD_WEBHOOK:-}
       - DISCORD_WEBHOOKS=${DISCORD_WEBHOOKS:-}
-      - OUTPUT_PATH=/generated/alertmanager.yml
+      - OUTPUT_PATH=/etc/alertmanager/alertmanager.yml
 
   alertmanager:
     image: ghcr.io/prestonr83/satisfactory-monitoring-alertmanager:latest
     restart: unless-stopped
     volumes:
-      - alertmanager-config:/generated
+      - alertmanager-config:/etc/alertmanager
       - alertmanager:/alertmanager
-    command:
-      - --config.file=/generated/alertmanager.yml
-      - --storage.path=/alertmanager
     ports:
       - "9093:9093"
     depends_on:
@@ -97,16 +95,25 @@ services:
     image: ghcr.io/prestonr83/satisfactory-monitoring-grafana:latest
     restart: unless-stopped
     volumes:
+      - grafana-provisioning:/etc/grafana/provisioning
+      - grafana-dashboards:/etc/grafana/dashboards
+      - grafana-icons:/usr/share/grafana/public/img/icons/satisfactory
+      - grafana-public-dashboards:/usr/share/grafana/public/dashboards
       - grafana:/var/lib/grafana
     ports:
       - "3000:3000"
 
 volumes:
   grafana:
+  grafana-provisioning:
+  grafana-dashboards:
+  grafana-icons:
+  grafana-public-dashboards:
   alertmanager:
   alertmanager-config:
   postgresql:
   prometheus:
+  prometheus-config:
 
 networks:
   default:
