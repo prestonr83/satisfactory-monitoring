@@ -66,6 +66,15 @@ services:
       timeout: 5s
       retries: 5
 
+  adminer:
+    image: adminer:latest
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   alertmanager-config:
     image: ghcr.io/prestonr83/ficsit-remote-monitoring-alertmanager-config:latest
     volumes:
