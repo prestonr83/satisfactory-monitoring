@@ -3,7 +3,7 @@ ARG TARGETOS
 ARG TARGETARCH
 WORKDIR /usr/src/
 RUN /usr/bin/git clone https://github.com/prestonr83/FicsitRemoteMonitoringCompanion.git . &&\
-  /usr/bin/git checkout 8f35185 &&\
+  /usr/bin/git checkout 2039381 &&\
   cd Companion &&\
   GOOS=${TARGETOS} GOARCH=${TARGETARCH} CGO_ENABLED=0 /usr/local/go/bin/go build -o bin/companion main.go
 

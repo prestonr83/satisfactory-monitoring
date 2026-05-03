@@ -71,6 +71,65 @@ func retrieveData(frmAddress string) ([]string, error) {
 	return result, nil
 }
 
+func labelString(value any) string {
+	switch value.(type) {
+	case nil:
+		return ""
+	case map[string]any:
+		return ""
+	default:
+		return fmt.Sprint(value)
+	}
+}
+
+func nestedMap(data map[string]any, key string) map[string]any {
+	value, ok := data[key]
+	if !ok {
+		return map[string]any{}
+	}
+	nested, ok := value.(map[string]any)
+	if !ok {
+		return map[string]any{}
+	}
+	return nested
+}
+
+func enrichMachineLabels(data []string) []string {
+	enriched := []string{}
+	for _, raw := range data {
+		var parsed map[string]any
+		if err := json.Unmarshal([]byte(raw), &parsed); err != nil {
+			enriched = append(enriched, raw)
+			continue
+		}
+
+		location := nestedMap(parsed, "location")
+		powerInfo := nestedMap(parsed, "PowerInfo")
+		parsed["Labels"] = map[string]string{
+			"machine_name":     labelString(parsed["Name"]),
+			"x":                labelString(location["x"]),
+			"y":                labelString(location["y"]),
+			"z":                labelString(location["z"]),
+			"class_name":       labelString(parsed["ClassName"]),
+			"id":               labelString(parsed["ID"]),
+			"somersloops":      labelString(parsed["Somersloops"]),
+			"power_shards":     labelString(parsed["PowerShards"]),
+			"is_paused":        labelString(parsed["IsPaused"]),
+			"is_producing":     labelString(parsed["IsProducing"]),
+			"circuit_id":       labelString(powerInfo["CircuitID"]),
+			"circuit_group_id": labelString(powerInfo["CircuitGroupID"]),
+		}
+
+		encoded, err := json.Marshal(parsed)
+		if err != nil {
+			enriched = append(enriched, raw)
+			continue
+		}
+		enriched = append(enriched, string(encoded))
+	}
+	return enriched
+}
+
 func retrieveSessionInfo(frmAddress string, data any) error {
 	resp, err := http.Get(frmAddress)
 
@@ -160,6 +219,9 @@ func (c *CacheWorker) pullMetrics(metric string, route string, keepHistory bool)
 	data, err := retrieveData(c.frmBaseUrl + route)
 	if err != nil {
 		return fmt.Errorf("error when parsing json: %s", err)
+	}
+	if metric == "factory" || metric == "extractor" {
+		data = enrichMachineLabels(data)
 	}
 	c.cacheMetrics(metric, data)
 	if err != nil {
