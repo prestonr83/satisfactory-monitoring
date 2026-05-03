@@ -199,6 +199,7 @@ func (c *CacheWorker) pullRealtimeMetrics() {
 	c.pullMetricsLog("trainStation", "/getTrainStation", true)
 	c.pullMetricsLog("truckStation", "/getTruckStation", true)
 	c.pullMetricsLog("player", "/getPlayer", false)
+	c.pullMetricsLog("switch", "/getSwitches", true)
 }
 
 func (c *CacheWorker) pullSessionName() {
