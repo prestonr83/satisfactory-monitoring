@@ -103,6 +103,9 @@ services:
   grafana:
     image: ghcr.io/prestonr83/satisfactory-monitoring-grafana:latest
     restart: unless-stopped
+    environment:
+      - GF_SERVER_DOMAIN=stats.ficsit.rdz.sh
+      - GF_SERVER_ROOT_URL=https://stats.ficsit.rdz.sh
     volumes:
       - grafana-provisioning:/etc/grafana/provisioning
       - grafana-dashboards:/etc/grafana/dashboards
