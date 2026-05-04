@@ -28,7 +28,14 @@ export TRAIN_DERAILED_THRESHOLD TRAIN_DERAILED_FOR
 
 mkdir -p /etc/prometheus
 
+seed_prometheus_config=false
 if [ ! -f /etc/prometheus/prometheus.yml ]; then
+  seed_prometheus_config=true
+elif grep -q "localhost:9090" /etc/prometheus/prometheus.yml && ! grep -q "nodes/" /etc/prometheus/prometheus.yml; then
+  seed_prometheus_config=true
+fi
+
+if [ "$seed_prometheus_config" = "true" ]; then
   cp /opt/satisfactory-monitoring/defaults/prometheus/prometheus.yml /etc/prometheus/prometheus.yml
 fi
 
